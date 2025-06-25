@@ -9,7 +9,7 @@
 
 triangle_t triangles_to_render[N_MESH_FACES];
 
-vec3_t camera_position = {0, 0, -4};
+vec3_t camera_position = {0, 0, -6};
 vec3_t cube_rotation   = {.x = 0, .y = 0, .z = 0};
 
 bool is_running         = false;
@@ -101,16 +101,26 @@ void update(void) {
 void render(void) {
     clear_color_buffer(0xFF000000);
 
+    // draw_pixel(100, 100, 0xFFFFFFFF);
+    // draw_pixel(200, 50, 0xFFFF0000);
+    // draw_line(100, 50, 200, 100, 0xFFFFFFFF);
+    // draw_line(100, 100, 200, 50, 0xFFFFFFFF);
+    // draw_line(100, 100, 150, 10, 0xFFFFFFFF);
+    // draw_line(150, 100, 100, 10, 0xFFFFFFFF);
+
     // loop all the projected triangles and render
     for (int i = 0; i < N_MESH_FACES; i++) {
         triangle_t triangle = triangles_to_render[i];
-        for (int j = 0; j < 3; j++) {
-            vec2_t vertex = triangle.points[j];
-            draw_rect(vertex.x, //
-                      vertex.y, //
-                      4, 4,     //
+        draw_triangle(triangle.points[0].x, triangle.points[0].y, //
+                      triangle.points[1].x, triangle.points[1].y, //
+                      triangle.points[2].x, triangle.points[2].y, //
                       0xFFFF00FF);
-        }
+        //     for (int j = 0; j < 3; j++) {
+        //         vec2_t vertex = triangle.points[j];
+        //         draw_rect(vertex.x, //
+        //                   vertex.y, //
+        //                   4, 4,     //
+        //                   0xFFFF00FF);
     }
 
     render_color_buffer();
