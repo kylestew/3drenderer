@@ -1,3 +1,4 @@
+#include "array.h"
 #include "display.h"
 #include "mesh.h"
 #include "vector.h"
@@ -7,13 +8,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
-triangle_t triangles_to_render[N_MESH_FACES];
-
-vec3_t camera_position = {0, 0, -6};
-vec3_t cube_rotation   = {.x = 0, .y = 0, .z = 0};
+triangle_t *triangles_to_render = NULL;
 
 bool is_running         = false;
 int previous_frame_time = 0;
+
+vec3_t camera_position = {0, 0, -6};
+float fov_factor       = 640.0;
 
 void setup(void) {
     // allocate color buffer
@@ -24,6 +25,10 @@ void setup(void) {
                                              SDL_PIXELFORMAT_ARGB8888,    //
                                              SDL_TEXTUREACCESS_STREAMING, //
                                              window_width, window_height);
+
+    //    load_cube_mesh_data();
+    // load_obj_file_data("./assets/cube.obj");
+    load_obj_file_data("./assets/f22.obj");
 }
 
 void process_input(void) {
@@ -57,18 +62,21 @@ void update(void) {
     }
     previous_frame_time = SDL_GetTicks();
 
-    cube_rotation.x += 0.01;
-    cube_rotation.y += 0.01;
-    cube_rotation.z += 0.01;
+    triangles_to_render = NULL;
 
-    // for each face
-    for (int i = 0; i < N_MESH_FACES; i++) {
-        face_t mesh_face = mesh_faces[i];
+    mesh.rotation.x += 0.01;
+    mesh.rotation.y += 0.0;
+    mesh.rotation.z += 0.0;
+
+    // Loop all triangle faces of our mesh
+    int num_faces = array_length(mesh.faces);
+    for (int i = 0; i < num_faces; i++) {
+        face_t mesh_face = mesh.faces[i];
 
         vec3_t face_vertices[3];
-        face_vertices[0] = mesh_vertices[mesh_face.a - 1];
-        face_vertices[1] = mesh_vertices[mesh_face.b - 1];
-        face_vertices[2] = mesh_vertices[mesh_face.c - 1];
+        face_vertices[0] = mesh.vertices[mesh_face.a - 1];
+        face_vertices[1] = mesh.vertices[mesh_face.b - 1];
+        face_vertices[2] = mesh.vertices[mesh_face.c - 1];
 
         // loop all 3 vertices of current face
         triangle_t projected_triangle;
@@ -76,15 +84,15 @@ void update(void) {
             vec3_t transformed_vertex = face_vertices[j];
 
             // apply transformations
-            transformed_vertex = vec3_rotate_x(transformed_vertex, cube_rotation.x);
-            transformed_vertex = vec3_rotate_y(transformed_vertex, cube_rotation.y);
-            transformed_vertex = vec3_rotate_z(transformed_vertex, cube_rotation.z);
+            transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
+            transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
+            transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
 
             // apply camera position
             transformed_vertex.z -= camera_position.z;
 
             // project!
-            vec2_t projected_vertex = ortho_project(transformed_vertex, 640.0);
+            vec2_t projected_vertex = ortho_project(transformed_vertex, fov_factor);
 
             // offset point to middle of screen
             projected_vertex.x += (window_width / 2);
@@ -93,38 +101,35 @@ void update(void) {
             projected_triangle.points[j] = projected_vertex;
         }
 
-        // save in the triangles to render array
-        triangles_to_render[i] = projected_triangle;
+        array_push(triangles_to_render, projected_triangle);
     }
 }
 
 void render(void) {
     clear_color_buffer(0xFF000000);
 
-    // draw_pixel(100, 100, 0xFFFFFFFF);
-    // draw_pixel(200, 50, 0xFFFF0000);
-    // draw_line(100, 50, 200, 100, 0xFFFFFFFF);
-    // draw_line(100, 100, 200, 50, 0xFFFFFFFF);
-    // draw_line(100, 100, 150, 10, 0xFFFFFFFF);
-    // draw_line(150, 100, 100, 10, 0xFFFFFFFF);
-
     // loop all the projected triangles and render
-    for (int i = 0; i < N_MESH_FACES; i++) {
+    int num_triangles = array_length(triangles_to_render);
+    for (int i = 0; i < num_triangles; i++) {
         triangle_t triangle = triangles_to_render[i];
+
         draw_triangle(triangle.points[0].x, triangle.points[0].y, //
                       triangle.points[1].x, triangle.points[1].y, //
                       triangle.points[2].x, triangle.points[2].y, //
                       0xFFFF00FF);
-        //     for (int j = 0; j < 3; j++) {
-        //         vec2_t vertex = triangle.points[j];
-        //         draw_rect(vertex.x, //
-        //                   vertex.y, //
-        //                   4, 4,     //
-        //                   0xFFFF00FF);
     }
+
+    // clear the array of triangles to render every frame loop
+    array_free(triangles_to_render);
 
     render_color_buffer();
     SDL_RenderPresent(renderer);
+}
+
+void free_resources(void) {
+    // free(color_buffer);
+    array_free(mesh.faces);
+    array_free(mesh.vertices);
 }
 
 int main(void) {
@@ -139,6 +144,7 @@ int main(void) {
     }
 
     destroy_window();
+    free_resources();
 
     return 0;
 }

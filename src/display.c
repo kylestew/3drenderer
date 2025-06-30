@@ -19,8 +19,8 @@ bool init_window(void) {
     SDL_GetCurrentDisplayMode(0, &display_mode);
 
     // larger pixels please - but keep aspect ratio
-    window_width  = display_mode.w / 4;
-    window_height = display_mode.h / 4;
+    window_width  = display_mode.w / 2;
+    window_height = display_mode.h / 2;
 
     // create SDL window
     window = SDL_CreateWindow(NULL,                        //
