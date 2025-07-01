@@ -27,8 +27,8 @@ void setup(void) {
                                              window_width, window_height);
 
     //    load_cube_mesh_data();
-    // load_obj_file_data("./assets/cube.obj");
-    load_obj_file_data("./assets/f22.obj");
+    load_obj_file_data("./assets/cube.obj");
+    // load_obj_file_data("./assets/f22.obj");
 }
 
 void process_input(void) {
@@ -46,7 +46,7 @@ void process_input(void) {
     }
 }
 
-vec2_t ortho_project(vec3_t point, float fov_factor) {
+vec2_t project(vec3_t point, float fov_factor) {
     vec2_t projected_point = {
         .x = (fov_factor * point.x) / point.z,
         .y = (fov_factor * point.y) / point.z,
@@ -65,21 +65,23 @@ void update(void) {
     triangles_to_render = NULL;
 
     mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.0;
-    mesh.rotation.z += 0.0;
+    mesh.rotation.y += 0.01;
+    mesh.rotation.z += 0.02;
 
     // Loop all triangle faces of our mesh
     int num_faces = array_length(mesh.faces);
     for (int i = 0; i < num_faces; i++) {
         face_t mesh_face = mesh.faces[i];
 
+        // load vertices (3) of triangle
         vec3_t face_vertices[3];
         face_vertices[0] = mesh.vertices[mesh_face.a - 1];
         face_vertices[1] = mesh.vertices[mesh_face.b - 1];
         face_vertices[2] = mesh.vertices[mesh_face.c - 1];
 
-        // loop all 3 vertices of current face
+        // APPLY TRANSFORMATIONS
         triangle_t projected_triangle;
+        vec3_t transformed_vertices[3]; // for backface culling
         for (int j = 0; j < 3; j++) {
             vec3_t transformed_vertex = face_vertices[j];
 
@@ -91,8 +93,37 @@ void update(void) {
             // apply camera position
             transformed_vertex.z -= camera_position.z;
 
-            // project!
-            vec2_t projected_vertex = ortho_project(transformed_vertex, fov_factor);
+            // save transformed vertex in the array of transformed vertices
+            transformed_vertices[j] = transformed_vertex;
+        }
+
+        // BACKFACE CULLING
+        vec3_t vector_a = transformed_vertices[0]; /*   A   */
+        vec3_t vector_b = transformed_vertices[1]; /*  / \  */
+        vec3_t vector_c = transformed_vertices[2]; /* C---B */
+
+        // get the vector subtraction of B-A and C-A
+        vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+        vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+
+        // computer the face normal (using cross product)
+        vec3_t normal = vec3_cross(vector_ab, vector_ac);
+
+        // find the vector between a point in the triangle and the camera origin
+        vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+
+        // Calculate how aligned the camera ray is with the face normal (using dot product)
+        float dot_normal_camera = vec3_dot(normal, camera_ray);
+
+        // bypass the triangles that are looking away from the camera
+        if (dot_normal_camera < 0) {
+            continue;
+        }
+
+        // PROJECT TO SCREENSPACE
+        for (int j = 0; j < 3; j++) {
+            // project the current vertex
+            vec2_t projected_vertex = project(transformed_vertices[j], fov_factor);
 
             // offset point to middle of screen
             projected_vertex.x += (window_width / 2);

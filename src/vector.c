@@ -14,12 +14,12 @@ vec2_t vec2_sub(vec2_t a, vec2_t b) {
                      .y = a.y - b.y};
     return result;
 }
-vec2_t vec2_mul(vec2_t b, float factor) {
+vec2_t vec2_mul(vec2_t v, float factor) {
     vec2_t result = {.x = v.x * factor, //
                      .y = v.y * factor};
     return result;
 }
-vec2_t vec2_div(vec2_t b, float factor) {
+vec2_t vec2_div(vec2_t v, float factor) {
     vec2_t result = {.x = v.x / factor, //
                      .y = v.y / factor};
     return result;
