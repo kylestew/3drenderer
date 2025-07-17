@@ -1,0 +1,6 @@
+CompileFlags:
+  Add: [
+    "-I/opt/homebrew/opt/sdl2/include",
+    "-L/opt/homebrew/opt/sdl2/lib"
+  ]
+

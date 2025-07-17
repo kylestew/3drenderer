@@ -40,7 +40,7 @@ void process_input(void) {
         is_running = false;
         break;
     case SDL_KEYDOWN:
-        if (event.key.keysym.sym == SDLK_ESCAPE)
+        if (event.key.keysym.sym == SDLK_ESCAPE || event.key.keysym.sym == SDLK_q)
             is_running = false;
         break;
     }
@@ -105,9 +105,15 @@ void update(void) {
         // get the vector subtraction of B-A and C-A
         vec3_t vector_ab = vec3_sub(vector_b, vector_a);
         vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+        vec3_normalize(&vector_ab);
+        vec3_normalize(&vector_ac);
 
         // computer the face normal (using cross product)
+        // (right handed coordinate system)
         vec3_t normal = vec3_cross(vector_ab, vector_ac);
+
+        // normalize the face normal vrector
+        vec3_normalize(&normal);
 
         // find the vector between a point in the triangle and the camera origin
         vec3_t camera_ray = vec3_sub(camera_position, vector_a);
@@ -117,7 +123,7 @@ void update(void) {
 
         // bypass the triangles that are looking away from the camera
         if (dot_normal_camera < 0) {
-            continue;
+            continue; // move to next triangle
         }
 
         // PROJECT TO SCREENSPACE
@@ -144,11 +150,19 @@ void render(void) {
     for (int i = 0; i < num_triangles; i++) {
         triangle_t triangle = triangles_to_render[i];
 
+        draw_filled_triangle(triangle.points[0].x, triangle.points[0].y, //
+                             triangle.points[1].x, triangle.points[1].y, //
+                             triangle.points[2].x, triangle.points[2].y, //
+                             0xFF00FF00);
+
         draw_triangle(triangle.points[0].x, triangle.points[0].y, //
                       triangle.points[1].x, triangle.points[1].y, //
                       triangle.points[2].x, triangle.points[2].y, //
-                      0xFFFF00FF);
+                      0xFF000000);
     }
+
+    // draw_triangle(300, 100, 50, 400, 500, 700, 0xFF00FF00);
+    // draw_filled_triangle(300, 100, 50, 400, 500, 700, 0xFF00FF00);
 
     // clear the array of triangles to render every frame loop
     array_free(triangles_to_render);
