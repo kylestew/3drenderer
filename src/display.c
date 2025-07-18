@@ -19,8 +19,8 @@ bool init_window(void) {
     SDL_GetCurrentDisplayMode(0, &display_mode);
 
     // larger pixels please - but keep aspect ratio
-    window_width  = display_mode.w / 2;
-    window_height = display_mode.h / 2;
+    // window_width  = display_mode.w / 1;
+    // window_height = display_mode.h / 1;
 
     // create SDL window
     window = SDL_CreateWindow(NULL,                        //
@@ -39,7 +39,7 @@ bool init_window(void) {
         return false;
     }
 
-    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+    // SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
     return true;
 }
@@ -108,12 +108,6 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
             err -= 2 * dx;
         }
     }
-}
-
-void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
-    draw_line(x0, y0, x1, y1, color);
-    draw_line(x1, y1, x2, y2, color);
-    draw_line(x2, y2, x0, y0, color);
 }
 
 void draw_grid(void) {
